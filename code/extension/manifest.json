@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+
+  "name": "ChatApp",
+  "description": "This is Chat App extension, that will be using P2P implementaiton",
+  "version": "1.0",
+
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html",
+      "default_title": "Start Chat!"
+  },
+  "permissions": [
+    "activeTab",
+    "storage"
+  ]
+}
