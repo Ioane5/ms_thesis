@@ -1,11 +1,14 @@
 $(function () {
-  var socket = io.connect('http://localhost:3000');
+  var dataController = chrome.extension.getBackgroundPage().dataController;
+  console.log(dataController);
   $('form').submit(function(){
-    socket.emit('message', $('#send_input').val());
+    var message = $('#send_input').val();
+    dataController.sendMessage(message);
+    // Reset Value in input
     $('#send_input').val('');
     return false;
   });
-  socket.on('message', function(msg){
+  dataController.onMessageReceived(function(msg) {
     $('#messages').append($('<li>').text(msg));
   });
 });
