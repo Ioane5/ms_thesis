@@ -8,21 +8,23 @@ class P2PController {
 
 		// Start listening to my connections
 		this.liveController.createMyRoom();
-		this.liveController.startListeningIncommingConnections();
+		this.liveController.startListeningIncomingConnections();
 	}
 
-	sendMessage(message) {
-		this.socket.emit('message', message);
+	query(key, callback) {
+		// TODO make a query from local and public datastore.
 	}
 
-	onMessageReceived(messageCallback) {
-		this.socket.on('message', function(msg){
-			messageCallback(msg);
-  		});
+	saveData(data, sharedWith) {
+		// TODO save data and share with peers
+	}
+
+	onDataReceived(messageCallback) {
+		// TODO somebody has shared data to us.
   	}
 
 	toString() {
-		return 'publicKey: ' + this.publicKey + ' privateKey: '+this.privateKey;
+		return 'publicKey: ' + this.publicKey + ' privateKey: ' + this.privateKey;
 	}
 }
 
@@ -55,12 +57,12 @@ class LiveController {
 		});
 	}
 
-	startListeningIncommingConnections() {
+	startListeningIncomingConnections() {
 		this.socket.on('connection_request', function(peerId) {
 			createPeerConnection(false, this.liveConfig);
 		});
 
-		this.socket.on('signalling_message', function(message)) {
+		this.socket.on('signalling_message', function(message) {
 			onSignallingMessage(message);
 		});
 	}
@@ -86,7 +88,7 @@ class LiveController {
 	 * Those messages are helpers for our application to set up connections properly,
      * No data messages are sent via Socket.io, just connection establishment
 	 */
-	sendSignallingMessage() {
+	sendSignallingMessage(message) {
 	  this.socket.emit('signalling_message', message);
 	}
 
@@ -94,14 +96,12 @@ class LiveController {
 	  console.log('Creating Peer connection as initiator?', isInitiator, 'config:', config);
 	  var peerConn = new RTCPeerConnection(config);
 
-	  this.connections[peerPublicKey] = new Connection();
-	  this.connections[peerPublicKey].peerConn = peerConn;
-
+	  this.connections[peerPublicKey] = new Connection(peerConn, null);
 	  // send any ice candidates to the other peer
 	  this.peerConn.onicecandidate = function(event) {
 	    console.log('icecandidate event:', event);
 	    if (event.candidate) {
-	      sendMessage({
+	      sendSignallingMessage({
 	        type: 'candidate',
 	        label: event.candidate.sdpMLineIndex,
 	        id: event.candidate.sdpMid,
