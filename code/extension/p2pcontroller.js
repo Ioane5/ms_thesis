@@ -4,11 +4,9 @@ class P2PController {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.liveController = LiveController(liveConfig);
-
-
-        // Start listening to my connections
-        this.liveController.createMyRoom();
-        this.liveController.startListeningIncomingConnections();
+        this.liveController.createMyRoom(function (message) {
+            this.onDataReceived(message);
+        });
     }
 
     query(key, callback) {
@@ -19,8 +17,17 @@ class P2PController {
         // TODO save data and share with peers
     }
 
-    onDataReceived(messageCallback) {
-        // TODO somebody has shared data to us.
+    listenDataChanges(callback) {
+        this.dataListener = callback;
+    }
+
+    private onDataReceived(data) {
+        if (this.dataListener) {
+            this.dataListener(data);
+            // TODO save in local store
+        } else {
+            console.log('data listener not set');
+        }
     }
 
     toString() {
@@ -46,18 +53,25 @@ class LiveController {
         this.connections = {};
     }
 
+    // Create my room and wait for incoming connections
     createMyRoom(callback) {
+        this.messageCallback = callback;
         this.socket.emit('create_my_room', this.publicKey);
         this.socket.on('create_my_room_result', function (created, errorMessage) {
-            callback(created);
-            if (!created) {
+            if (created) {
+                this.startListeningIncomingConnections();
+            } else {
                 console.log('could not create room: ' + errorMessage)
             }
         });
     }
 
     onMessageReceived(message) {
-        console.log('received message' + message);
+        if (this.messageCallback) {
+            this.messageCallback(message);
+        } else {
+            console.log('Message listener is not set');
+        }
     }
 
     startListeningIncomingConnections() {
@@ -151,7 +165,7 @@ class LiveController {
 
     onDataChannelCreated(channel) {
         console.log('onDataChannelCreated:', channel);
-        channel.onopen = function() {
+        channel.onopen = function () {
             console.log('CHANNEL opened!!!');
         };
 
