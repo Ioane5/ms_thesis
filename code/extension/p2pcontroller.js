@@ -3,7 +3,7 @@ class P2PController {
     constructor(publicKey, privateKey, liveUrl, liveConfig) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        this.liveController = LiveController(liveConfig);
+        this.liveController = new LiveController(liveConfig);
         this.liveController.createMyRoom(function (message) {
             this.onDataReceived(message);
         });
@@ -21,7 +21,7 @@ class P2PController {
         this.dataListener = callback;
     }
 
-    private onDataReceived(data) {
+    onDataReceived(data) {
         if (this.dataListener) {
             this.dataListener(data);
             // TODO save in local store

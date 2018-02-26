@@ -1,10 +1,13 @@
-$(function () {
-    let dataController;
+function getDataController() {
     if (chrome.extension) { // If in chrome extension mode
-        dataController = chrome.extension.getBackgroundPage().dataController;
+        return chrome.extension.getBackgroundPage().dataController;
     } else { // else Just browser page mode
-        dataController = new P2PController('key1', 'prvtk', 'http://localhost:3000');
+        return new P2PController('key1', 'prvtk', 'http://localhost:3000');
     }
+}
+
+$(function () {
+    let dataController = getDataController();
     console.log(dataController);
     $('form').submit(function () {
         let message = $('#send_input').val();
