@@ -2,7 +2,7 @@ function getDataController() {
     if (chrome.extension) { // If in chrome extension mode
         return chrome.extension.getBackgroundPage().dataController;
     } else { // else Just browser page mode
-        return new P2PController('key1', 'prvtk', 'http://localhost:3000');
+        return new P2PController('key1', 'prvtk', 'http://localhost:8080');
     }
 }
 

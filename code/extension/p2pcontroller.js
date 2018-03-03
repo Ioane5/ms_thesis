@@ -3,7 +3,7 @@ class P2PController {
     constructor(publicKey, privateKey, liveUrl, liveConfig) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        this.liveController = new LiveController(liveConfig);
+        this.liveController = new LiveController(publicKey, privateKey, liveUrl, liveConfig);
         this.liveController.createMyRoom(function (message) {
             this.onDataReceived(message);
         });
@@ -40,6 +40,7 @@ class LiveController {
     constructor(publicKey, privateKey, url, liveConfig) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
+        console.log('LiveController connecting to: ' + url);
         this.socket = io.connect(url);
         if (liveConfig) {
             this.liveConfig = liveConfig;
@@ -56,8 +57,9 @@ class LiveController {
     // Create my room and wait for incoming connections
     createMyRoom(callback) {
         this.messageCallback = callback;
-        this.socket.emit('create_my_room', this.publicKey);
-        this.socket.on('create_my_room_result', function (created, errorMessage) {
+        this.socket.emit('enter_my_room', this.publicKey);
+        this.socket.on('enter_my_room', function (created, errorMessage) {
+            console.log('enter_my_room ' + created + ' error: ' + errorMessage);
             if (created) {
                 this.startListeningIncomingConnections();
             } else {
