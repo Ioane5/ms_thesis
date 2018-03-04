@@ -1,48 +1,4 @@
-class P2PController {
-
-    constructor(publicKey, privateKey, liveUrl, liveConfig) {
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
-        this.liveController = new LiveController(publicKey, privateKey, liveUrl, liveConfig);
-        this.liveController.onMessageReceived((message) => {
-            this.onDataReceived(message);
-        });
-    }
-
-    query(key, callback) {
-        // TODO make a query from local and public datastore.
-    }
-
-    saveData(data, sharedWith) {
-        // TODO save data and share with peers
-        this.liveController.sendData(data, sharedWith, (success) => {
-            console.log('sendData success: ' + success);
-            if (!success) {
-                // TODO try with MessageBox
-            }
-        });
-    }
-
-    listenDataChanges(callback) {
-        this.dataListener = callback;
-    }
-
-    onDataReceived(data) {
-        if (this.dataListener) {
-            this.dataListener(data);
-            // TODO save in local store
-        } else {
-            console.log('data listener not set');
-        }
-    }
-
-    toString() {
-        return 'publicKey: ' + this.publicKey + ' privateKey: ' + this.privateKey;
-    }
-}
-
-class LiveController {
-
+class LiveDataController {
 
     constructor(publicKey, privateKey, url, config) {
         this.publicKey = publicKey;
@@ -59,7 +15,7 @@ class LiveController {
             };
         }
         this.connections = {};
-
+        // TODO
         this.createMyRoom();
     }
 
@@ -68,7 +24,7 @@ class LiveController {
     }
 
     createMyRoom() {
-        this.socket.emit('enter_my_room', new Message(this.publicKey, null, null));
+        this.socket.emit('create_my_room', Message(this.publicKey, null, null));
         this.socket.on('enter_my_room', (success) => {
             this.status = success;
             console.log('enter_my_room ' + success);
@@ -82,7 +38,7 @@ class LiveController {
 
     sendData(data, recipient, callback) {
         if (this.status) {
-            this.socket.emit('connection_request', new Message(this.publicKey, recipient, null));
+            this.socket.emit('connection_request', Message(this.publicKey, recipient, null));
             this.createPeerConnection(recipient, true, (connection) => {
                 if (connection && connection.dataChannel) {
                     connection.dataChannel.send(data);
