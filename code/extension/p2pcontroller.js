@@ -4,7 +4,7 @@ class P2PController {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.liveController = new LiveController(publicKey, privateKey, liveUrl, liveConfig);
-        this.liveController.createMyRoom(function (message) {
+        this.liveController.onMessageReceived((message) => {
             this.onDataReceived(message);
         });
     }
@@ -14,7 +14,19 @@ class P2PController {
     }
 
     saveData(data, sharedWith) {
-        // TODO save data and share with peers
+        try {
+
+
+            // TODO save data and share with peers
+            this.liveController.sendData(data, sharedWith, (success) => {
+                console.log('sendData success: ' + success);
+                if (!success) {
+                    // TODO try with MessageBox
+                }
+            });
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     listenDataChanges(callback) {
@@ -37,68 +49,81 @@ class P2PController {
 
 class LiveController {
 
-    constructor(publicKey, privateKey, url, liveConfig) {
+    constructor(publicKey, privateKey, url, config) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         console.log('LiveController connecting to: ' + url);
         this.socket = io.connect(url);
-        if (liveConfig) {
-            this.liveConfig = liveConfig;
+        if (config) {
+            this.config = config;
         } else {
-            this.liveConfig = {
+            this.config = {
                 'iceServers': [{
-                    'urls': ['stun:stun.l.google.com:19302', 'stun.2talk.co.nz:3478']
+                    'urls': ['stun:stun.l.google.com:19302', 'stun:stun.2talk.co.nz:3478']
                 }]
             };
         }
         this.connections = {};
+
+        this.createMyRoom();
+    }
+
+    onMessageReceived(callback) {
+        this.messageCallback = callback;
     }
 
     // Create my room and wait for incoming connections
-    createMyRoom(callback) {
-        this.messageCallback = callback;
+    createMyRoom() {
         this.socket.emit('enter_my_room', this.publicKey);
-        this.socket.on('enter_my_room', function (created, errorMessage) {
-            console.log('enter_my_room ' + created + ' error: ' + errorMessage);
-            if (created) {
+        this.socket.on('enter_my_room', (success) => {
+            this.status = success;
+            console.log('enter_my_room ' + success);
+            if (success) {
                 this.startListeningIncomingConnections();
             } else {
-                console.log('could not create room: ' + errorMessage)
+                console.log('could not create room: ')
             }
         });
     }
 
-    onMessageReceived(message) {
-        if (this.messageCallback) {
-            this.messageCallback(message);
-        } else {
-            console.log('Message listener is not set');
-        }
-    }
-
     startListeningIncomingConnections() {
-        this.socket.on('connection_request', function (peerId) {
-            this.createPeerConnection(false, this.liveConfig);
+        this.socket.on('connection_request', (peerPublicKey) => {
+            this.createPeerConnection(peerPublicKey, false);
         });
 
-        this.socket.on('signalling_message', function (message) {
+        this.socket.on('signalling_message', (message) => {
             this.onSignallingMessage(message);
         });
+    }
+
+    sendData(data, recipient, callback) {
+        if (this.status) {
+            this.createPeerConnection(recipient, true, (connection) => {
+                if (connection && connection.dataChannel) {
+                    connection.dataChannel.send(data);
+                    callback(true);
+                } else {
+                    callback(false);
+                }
+            })
+        } else {
+            callback(false);
+        }
     }
 
     onSignallingMessage(message) {
         let peerConn = this.connections[message.peerPublicKey];
         if (message.type === 'offer') {
             console.log('Got offer. Sending answer to peer.');
-            peerConn.setRemoteDescription(new RTCSessionDescription(message), function () {
+            peerConn.setRemoteDescription(new RTCSessionDescription(message), () => {
             }, this.onError);
-            peerConn.createAnswer(function (descr) {
+            peerConn.createAnswer((descr) => {
                 descr.peerPublicKey = message.peerPublicKey;
                 this.onLocalSessionCreated(descr)
             }, this.onError);
         } else if (message.type === 'answer') {
             console.log('Got answer.');
-            peerConn.setRemoteDescription(new RTCSessionDescription(message), function () {
+            peerConn.setRemoteDescription(new RTCSessionDescription(message), () => {
             }, this.onError);
         } else if (message.type === 'candidate') {
             peerConn.addIceCandidate(new RTCIceCandidate({
@@ -113,24 +138,23 @@ class LiveController {
      * Those messages are helpers for our application to set up connections properly,
      * No data messages are sent via Socket.io, just connection establishment
      */
-    sendSignallingMessage(message) {
-        this.socket.emit('signalling_message', message);
+    sendSignallingMessage(recipientPublicKey, message) {
+        this.socket.emit('signalling_message', recipientPublicKey, message);
     }
 
-    createPeerConnection(peerPublicKey, isInitiator, config) {
-        console.log('Creating Peer connection as initiator?', isInitiator, 'config:', config);
-        let peerConnection = new RTCPeerConnection(config);
-        this.connections[peerPublicKey] = new Connection(peerConnection, null);
+    createPeerConnection(peerPublicKey, isInitiator, callback) {
+        console.log('Creating Peer connection as initiator?', isInitiator, 'config:', this.config);
+        let peerConnection = new RTCPeerConnection(this.config);
+        this.connections[peerPublicKey] = new Connection(peerConnection, null, callback);
         // send any ice candidates to the other peer
-        this.connections[peerPublicKey].peerConn.onicecandidate = function (event) {
+        this.connections[peerPublicKey].peerConn.onicecandidate = (event) => {
             console.log('icecandidate event:', event);
             if (event.candidate) {
-                this.sendSignallingMessage({
+                this.sendSignallingMessage(peerPublicKey, {
                     type: 'candidate',
                     label: event.candidate.sdpMLineIndex,
                     id: event.candidate.sdpMid,
                     candidate: event.candidate.candidate,
-                    peerPublicKey: peerPublicKey
                 });
             } else {
                 console.log('End of candidates.');
@@ -140,52 +164,62 @@ class LiveController {
         if (isInitiator) {
             console.log('Creating Data Channel');
             this.connections[peerPublicKey].dataChannel = peerConnection.createDataChannel('data');
-            this.onDataChannelCreated(this.connections[peerPublicKey].dataChannel);
+            this.onDataChannelCreated(this.connections[peerPublicKey]);
 
             console.log('Creating an offer');
-            peerConnection.createOffer(function (desc) {
+            peerConnection.createOffer((desc) => {
                 desc.peerPublicKey = peerPublicKey;
                 this.onLocalSessionCreated(desc);
             }, this.onError);
         } else {
-            peerConnection.ondatachannel = function (event) {
+            peerConnection.ondatachannel = (event) => {
                 console.log('ondatachannel:', event.channel);
                 this.connections[peerPublicKey].dataChannel = event.channel;
-                this.onDataChannelCreated(this.connections[peerPublicKey].dataChannel);
+                this.onDataChannelCreated(this.connections[peerPublicKey]);
             };
         }
     }
 
     onLocalSessionCreated(desc) {
-        let peerConn = this.connections[desc.peerPublicKey];
+        let connection = this.connections[desc.peerPublicKey];
         console.log('local session created:', desc);
-        peerConn.setLocalDescription(desc, function () {
-            console.log('sending local desc:', peerConn.localDescription);
-            this.sendSignallingMessage(peerConn.localDescription);
+        connection.peerConn.setLocalDescription(desc, () => {
+            console.log('sending local desc:', connection.peerConn.localDescription);
+            this.sendSignallingMessage(connection.peerPublicKey, connection.peerConn.localDescription);
         }, this.onError);
     }
 
-    onDataChannelCreated(channel) {
-        console.log('onDataChannelCreated:', channel);
-        channel.onopen = function () {
+    onDataChannelCreated(connection) {
+        console.log('onDataChannelCreated:', connection.dataChannel);
+        connection.dataChannel.onopen = () => {
             console.log('CHANNEL opened!!!');
+            if (connection.callback) {
+                connection.callback(connection);
+            }
         };
-
-        channel.onmessage = function (event) {
+        connection.dataChannel.onmessage = (event) => {
             console.log('received data ' + event.data);
-            onMessageReceived(event.data);
+            this.onDataReceived(event.data);
+        };
+    }
+
+    onDataReceived(message) {
+        if (this.messageCallback) {
+            this.messageCallback(message);
+        } else {
+            console.log('Message listener is not set');
         }
     }
 
-    static onError(err) {
+    onError(err) {
         console.log(err.toString(), err);
     }
 }
 
 class Connection {
-    constructor(peerConn, dataChannel) {
+    constructor(peerConn, dataChannel, callback) {
         this.peerConn = peerConn;
         this.dataChannel = dataChannel;
+        this.callback = callback;
     }
 }
-

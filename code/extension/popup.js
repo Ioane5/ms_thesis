@@ -11,7 +11,7 @@ $(function () {
     console.log(dataController);
     $('form').submit(function () {
         let message = $('#send_input').val();
-        dataController.saveData(message, 'some peer id?');
+        dataController.saveData(message, 'key2');
         // Reset Value in input
         $('#send_input').val('');
         return false;
