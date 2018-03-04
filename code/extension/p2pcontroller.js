@@ -14,19 +14,13 @@ class P2PController {
     }
 
     saveData(data, sharedWith) {
-        try {
-
-
-            // TODO save data and share with peers
-            this.liveController.sendData(data, sharedWith, (success) => {
-                console.log('sendData success: ' + success);
-                if (!success) {
-                    // TODO try with MessageBox
-                }
-            });
-        } catch (e) {
-            console.log(e);
-        }
+        // TODO save data and share with peers
+        this.liveController.sendData(data, sharedWith, (success) => {
+            console.log('sendData success: ' + success);
+            if (!success) {
+                // TODO try with MessageBox
+            }
+        });
     }
 
     listenDataChanges(callback) {
@@ -87,17 +81,21 @@ class LiveController {
     }
 
     startListeningIncomingConnections() {
+        console.log('listening to incoming connections');
         this.socket.on('connection_request', (peerPublicKey) => {
+            console.log('got connection_request: ' + peerPublicKey);
             this.createPeerConnection(peerPublicKey, false);
         });
 
         this.socket.on('signalling_message', (message) => {
+            console.log('got signalling_message: ' + message);
             this.onSignallingMessage(message);
         });
     }
 
     sendData(data, recipient, callback) {
         if (this.status) {
+            this.socket.emit('connection_request', this.publicKey, recipient);
             this.createPeerConnection(recipient, true, (connection) => {
                 if (connection && connection.dataChannel) {
                     connection.dataChannel.send(data);
@@ -112,7 +110,7 @@ class LiveController {
     }
 
     onSignallingMessage(message) {
-        let peerConn = this.connections[message.peerPublicKey];
+        let peerConn = this.connections[message.peerPublicKey].peerConn;
         if (message.type === 'offer') {
             console.log('Got offer. Sending answer to peer.');
             peerConn.setRemoteDescription(new RTCSessionDescription(message), () => {
@@ -145,7 +143,7 @@ class LiveController {
     createPeerConnection(peerPublicKey, isInitiator, callback) {
         console.log('Creating Peer connection as initiator?', isInitiator, 'config:', this.config);
         let peerConnection = new RTCPeerConnection(this.config);
-        this.connections[peerPublicKey] = new Connection(peerConnection, null, callback);
+        this.connections[peerPublicKey] = new Connection(peerConnection, null, callback, peerPublicKey);
         // send any ice candidates to the other peer
         this.connections[peerPublicKey].peerConn.onicecandidate = (event) => {
             console.log('icecandidate event:', event);
@@ -217,9 +215,12 @@ class LiveController {
 }
 
 class Connection {
-    constructor(peerConn, dataChannel, callback) {
+    constructor(peerConn, dataChannel, callback, peerPublicKey) {
         this.peerConn = peerConn;
         this.dataChannel = dataChannel;
         this.callback = callback;
+        this.peerPublicKey = peerPublicKey;
     }
 }
+
+// class DataChannelHelper(myId, peerId, )
