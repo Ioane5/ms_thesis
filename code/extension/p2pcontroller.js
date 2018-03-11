@@ -43,7 +43,6 @@ class P2PController {
 
 class LiveController {
 
-
     constructor(publicKey, privateKey, url, config) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
@@ -78,21 +77,39 @@ class LiveController {
                 this.onError('could not create room:');
             }
         });
+        this.socket.on('error', (message) => {
+            console.log('Error! : ' + message);
+            if (message && message.toPublicKey) {
+                this.onSignallingError(message);
+            }
+        });
     }
 
     sendData(data, recipient, callback) {
         if (this.status) {
-            this.socket.emit('connection_request', new Message(this.publicKey, recipient, null));
-            this.createPeerConnection(recipient, true, (connection) => {
-                if (connection && connection.dataChannel) {
-                    connection.dataChannel.send(data);
-                    callback(true);
-                } else {
-                    callback(false);
-                }
-            })
+            let connection = this.connections[recipient];
+            if (connection) {
+                connection.callback = callback;
+                this.sendDataToConnection(data, connection)
+            } else {
+                this.socket.emit('connection_request', new Message(this.publicKey, recipient, null));
+                this.createPeerConnection(recipient, true, (connection) => {
+                    connection.callback = callback;
+                    this.sendDataToConnection(data, connection)
+                })
+            }
         } else {
             callback(false);
+        }
+    }
+
+    sendDataToConnection(data, connection) {
+        try {
+            connection.dataChannel.send(data);
+            connection.callback(true);
+        } catch (e) {
+            connection.callback(false);
+            this.onSignallingError(connection.peerPublicKey);
         }
     }
 
@@ -104,7 +121,11 @@ class LiveController {
 
         this.socket.on('signalling_message', (message) => {
             console.log('got signalling_message: ' + message);
-            this.onSignallingMessage(message.fromPublicKey, message.data);
+            if (this.connections[message.fromPublicKey]) {
+                this.onSignallingMessage(message.fromPublicKey, message.data);
+            } else {
+                this.onSignallingError(message.fromPublicKey);
+            }
         });
     }
 
@@ -113,14 +134,20 @@ class LiveController {
         if (message.type === 'offer') {
             console.log('Got offer. Sending answer to peer.');
             peerConn.setRemoteDescription(new RTCSessionDescription(message), () => {
-            }, this.onError);
+            }, () => {
+                this.onSignallingError(peerPublicKey)
+            });
             peerConn.createAnswer((descr) => {
                 this.onLocalSessionCreated(peerPublicKey, descr)
-            }, this.onError);
+            }, () => {
+                this.onSignallingError(peerPublicKey)
+            });
         } else if (message.type === 'answer') {
             console.log('Got answer.');
             peerConn.setRemoteDescription(new RTCSessionDescription(message), () => {
-            }, this.onError);
+            }, () => {
+                this.onSignallingError(peerPublicKey)
+            });
         } else if (message.type === 'candidate') {
             peerConn.addIceCandidate(new RTCIceCandidate({
                 candidate: message.candidate
@@ -143,7 +170,7 @@ class LiveController {
         let peerConnection = new RTCPeerConnection(this.config);
         this.connections[peerPublicKey] = new Connection(peerConnection, null, callback, peerPublicKey);
         // send any ice candidates to the other peer
-        this.connections[peerPublicKey].peerConn.onicecandidate = (event) => {
+        peerConnection.onicecandidate = (event) => {
             console.log('icecandidate event:', event);
             if (event.candidate) {
                 this.sendSignallingMessage(peerPublicKey, {
@@ -153,10 +180,14 @@ class LiveController {
                     candidate: event.candidate.candidate,
                 });
             } else {
-                console.log('End of candidates.');
+                console.log('End of candidates.' + peerConnection.iceConnectionState);
             }
         };
-
+        peerConnection.oniceconnectionstatechange = (event) => {
+            if (peerConnection.iceConnectionState == 'failed') {
+                this.onSignallingError(peerPublicKey);
+            }
+        };
         if (isInitiator) {
             console.log('Creating Data Channel');
             this.connections[peerPublicKey].dataChannel = peerConnection.createDataChannel('data');
@@ -165,7 +196,9 @@ class LiveController {
             console.log('Creating an offer');
             peerConnection.createOffer((desc) => {
                 this.onLocalSessionCreated(peerPublicKey, desc);
-            }, this.onError);
+            }, () => {
+                this.onSignallingError(peerPublicKey)
+            });
         } else {
             peerConnection.ondatachannel = (event) => {
                 console.log('ondatachannel:', event.channel);
@@ -182,7 +215,9 @@ class LiveController {
         peerConn.setLocalDescription(desc, () => {
             console.log('sending local desc:', peerConn.localDescription);
             this.sendSignallingMessage(peerPublicKey, peerConn.localDescription);
-        }, this.onError);
+        }, () => {
+            this.onSignallingError(peerPublicKey)
+        });
     }
 
     onDataChannelCreated(connection) {
@@ -207,9 +242,15 @@ class LiveController {
         }
     }
 
-
     onError(errorMsg) {
         console.log(errorMsg);
+    }
+
+    onSignallingError(fromPublicKey) {
+        console.log('signalling error ' + fromPublicKey);
+        if (this.connections[fromPublicKey]) {
+            delete this.connections[fromPublicKey]
+        }
     }
 }
 
