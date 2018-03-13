@@ -2,46 +2,106 @@
 <html>
 <head>
     <title>Socket.IO chat</title>
-    <style>
-        * {margin: 0; padding: 0; box-sizing: border-box;}
-        body {font: 13px Helvetica, Arial;}
-        #send_form { background: #000; padding: 3px;}
-        #send_form input {border: 0; padding: 10px; width: 74%;}
-        #send_form button { width: 22%; background: rgb(130, 224, 255); border: none; padding: 10px;}
-        #config_form { padding: 3px; width: 100%;}
-        #forms { position: fixed;bottom: 0;}
-        nav ul { height: 210px; width: 100%;}
-        nav ul { overflow: hidden; overflow-y: scroll;}
-        #messages li { padding: 5px 10px;}
-        #messages li:nth-child(odd) { background: #eee;}
-        body { min-width: 250px; min-height: 250px; position: relative;}
-    </style>
     <!-- TODO Remove this code in extension mode -->
     <script src="p2pcontroller.js"></script>
     <script src="socket.io.js"></script>
-    <script src="jquery-1.11.1.js"></script>
+    <script src="libraries/jquery-1.11.1.js"></script>
     <script src="popup.js"></script>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Compiled and minified JavaScript -->
+    <script src="libraries/materialize.min.js"></script>
+    <style>
+        body {
+            width: 400px;
+            height: 450px;
+        }
+
+        .messages {
+            height: 420px;
+            width: 100%;
+            overflow: hidden;
+            overflow-y: scroll;
+        }
+
+        .send_form {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+        }
+
+        #settings_button {
+            position: absolute;
+            top: 8px;
+            right: 16px;
+        }
+
+        /* label focus color */
+        .input-field input[type=text]:focus + label, .materialize-textarea:focus:not([readonly]) + label {
+            color: #2196f3 !important;
+        }
+
+        /* label underline focus color */
+        .input-field input[type=text]:focus, .materialize-textarea:focus:not([readonly]) {
+            border-bottom: 1px solid #2196f3 !important;
+            box-shadow: 0 1px 0 0 #2196f3 !important;
+        }
+
+    </style>
 </head>
 <body>
-<nav>
-    <ul id="messages"></ul>
-</nav>
 
-<div id="forms">
-    <form id="config_form">
-        My Public Key:<br/>
-        <input id="my_public_key" autocomplete="off"/> <br/>
-        My Private Key:<br/>
-        <input id="my_private_key" autocomplete="off"/> <br/>
-        <button>Initialize</button>
-    </form>
-    Peer Public Key: <input id="peer_public_key" autocomplete="off"/> <br/>
-    <br/><br/>
-    <form action="" id="send_form">
-        <input id="send_input" autocomplete="off"/>
-        <button>Send</button>
-    </form>
+<div class="content">
+
+    <a id="settings_button" class="btn-floating blue"><i class="material-icons">settings</i></a>
+
+    <div class="messages">
+        hellooo<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        <ul id="messages"></ul>
+    </div>
+
+    <div class="send_form row valign-wrapper">
+        <div class="input-field col s10 m11">
+            <input id="send_input" placeholder="Type a message..." type="text" class="validate" autofocus="false">
+        </div>
+        <div class="col s2 m1">
+            <a id="send_button" class="btn-floating blue center-align"><i class="material-icons">send</i></a>
+        </div>
+    </div>
 </div>
+
+<!--Settings Dialog-->
+<div id="settings_modal" class="modal">
+    <div class="modal-content">
+        <h5>Settings</h5>
+        <div class="row">
+            <div class="input-field col s12">
+                <input id="public_key" type="text">
+                <label for="public_key">Public Key</label>
+            </div>
+            <div class="input-field col s12">
+                <input id="private_key" type="text">
+                <label for="private_key">Private Key</label>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a id="save_settings_button" class="modal-action modal-close waves-effect btn-flat">Save</a>
+    </div>
+</div>
+
+<!--<form id="config_form">-->
+<!--My Public Key:<br/>-->
+<!--<input id="my_public_key"/> <br/>-->
+<!--My Private Key:<br/>-->
+<!--<input id="my_private_key" /> <br/>-->
+<!--<button>Initialize</button>-->
+<!--</form>-->
+<!--Peer Public Key: <input id="peer_public_key"/> <br/>-->
+<!--<br/><br/>-->
 
 </body>
 </html>
