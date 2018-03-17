@@ -4,6 +4,7 @@
     <title>Socket.IO chat</title>
     <!-- TODO Remove this code in extension mode -->
     <script src="p2pcontroller.js"></script>
+    <script src="p2pcontroller_wrapper.js"></script>
     <script src="socket.io.js"></script>
     <script src="libraries/jquery-1.11.1.js"></script>
     <script src="popup.js"></script>
@@ -39,6 +40,11 @@
             right: 16px;
         }
 
+        #peer_public_key_input {
+            position: absolute;
+            margin: 16px;
+        }
+
         /* label focus color */
         .input-field input[type=text]:focus + label, .materialize-textarea:focus:not([readonly]) + label {
             color: #2196f3 !important;
@@ -58,8 +64,14 @@
 
     <a id="settings_button" class="btn-floating blue"><i class="material-icons">settings</i></a>
 
+    <div id="peer_public_key_input">
+        <div class="input-field">
+            <input id="peer_public_key" type="text">
+            <label for="peer_public_key">Peer Public Key</label>
+        </div>
+    </div>
+
     <div class="messages">
-        hellooo<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
         <ul id="messages"></ul>
     </div>
 

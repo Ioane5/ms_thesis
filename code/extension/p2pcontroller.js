@@ -166,7 +166,7 @@ class LiveController {
     }
 
     createPeerConnection(peerPublicKey, isInitiator, callback) {
-        console.log('Creating Peer connection as initiator?', isInitiator, 'config:', this.config);
+        console.log('Creating Peer connection as initiator?' + isInitiator + 'config:' + this.config);
         let peerConnection = new RTCPeerConnection(this.config);
         this.connections[peerPublicKey] = new Connection(peerConnection, null, callback, peerPublicKey);
         // send any ice candidates to the other peer

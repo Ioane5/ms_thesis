@@ -1,7 +1,3 @@
-console.log('starting background');
+console.log('Initializing Background Page');
 
-function randomToken() {
-  return Math.floor((1 + Math.random()) * 1e16).toString(16).substring(1);
-}
-
-let dataController;
+let p2pControllerReceiver = new P2PControllerReceiver();

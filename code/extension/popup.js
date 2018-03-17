@@ -1,47 +1,39 @@
 $(function () {
-    let dataController = undefined;
+    let dataController;
 
     function initDataController(publicKey, privateKey) {
-        let newDataController = new P2PController(publicKey, privateKey, 'http://localhost:8080');
-        if (chrome.extension) { // If in chrome extension mode
-            chrome.extension.getBackgroundPage().dataController = newDataController;
-        } else { // else Just browser page mode
-            dataController = newDataController;
-        }
+        dataController.init(publicKey, privateKey, 'http://localhost:8080', null, onDataControllerAvailable);
+    }
 
-        newDataController.listenDataChanges((message) => {
+    function onDataControllerAvailable() {
+        dataController.listenDataChanges((message) => {
             $('#messages').append($('<li>').text(message));
         });
     }
 
-    function getDataController() {
-        if (chrome.extension) { // If in chrome extension mode
-            return chrome.extension.getBackgroundPage().dataController;
-        } else { // else Just browser page mode
-            return dataController;
-        }
-    }
-
     function initialize() {
-        if (getDataController()) {
-            fillSettings();
-        } else {
-            openSettingsModal();
-        }
+        dataController = new P2PControllerClient();
+        dataController.isInitialized((publicKey, privateKey) => {
+            if (publicKey) {
+                fillSettings(publicKey, privateKey);
+                onDataControllerAvailable();
+            } else {
+                openSettingsModal();
+            }
+        });
     }
 
     /**
      * Fills settings with Public and private keys
      */
-    function fillSettings() {
-        let controller = getDataController();
-        $('#public_key').val(controller.publicKey);
-        $('#private_key').val(controller.privateKey);
+    function fillSettings(publicKey, privateKey) {
+        $('#public_key').val(publicKey);
+        $('#private_key').val(privateKey);
     }
 
     $('#send_input').keypress(function (event) {
-        var keycode = event.keyCode || event.which;
-        if (keycode == '13') {
+        let keycode = event.keyCode || event.which;
+        if (keycode === '13') {
             sendMessage();
         }
     });
@@ -53,8 +45,9 @@ $(function () {
 
     function sendMessage() {
         let sendInput = $('#send_input');
+        let sendTo = $('#peer_public_key').val();
         let message = sendInput.val();
-        getDataController().saveData(message, $('#peer_public_key').val());
+        dataController.saveData(message, sendTo);
         // Reset Value in input
         sendInput.val('');
     }
