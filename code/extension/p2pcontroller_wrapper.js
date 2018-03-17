@@ -105,7 +105,10 @@ class P2PControllerReceiver {
 
     isInitialized(callback) {
         if (this.dataController) {
-            callback(this.dataController.publicKey, this.dataController.privateKey);
+            callback({
+                "publicKey": this.dataController.publicKey,
+                "privateKey": this.dataController.privateKey
+            });
         } else {
             callback();
         }

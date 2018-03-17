@@ -40,9 +40,9 @@
             right: 16px;
         }
 
-        #peer_public_key_input {
-            position: absolute;
-            margin: 16px;
+        #peer_public_key {
+            width: 180px;
+            margin-left: 16px;
         }
 
         /* label focus color */
@@ -61,15 +61,14 @@
 <body>
 
 <div class="content">
-
     <a id="settings_button" class="btn-floating blue"><i class="material-icons">settings</i></a>
-
-    <div id="peer_public_key_input">
-        <div class="input-field">
-            <input id="peer_public_key" type="text">
-            <label for="peer_public_key">Peer Public Key</label>
+    <nav>
+        <div class="nav-wrapper blue">
+            <div class="input-field">
+                <input id="peer_public_key" placeholder="Peer Public Key" type="text" class="validate">
+            </div>
         </div>
-    </div>
+    </nav>
 
     <div class="messages">
         <ul id="messages"></ul>
@@ -101,19 +100,10 @@
         </div>
     </div>
     <div class="modal-footer">
+        <a id="cancel_settings_button" class="modal-action modal-close waves-effect btn-flat">Cancel</a>
         <a id="save_settings_button" class="modal-action modal-close waves-effect btn-flat">Save</a>
     </div>
 </div>
-
-<!--<form id="config_form">-->
-<!--My Public Key:<br/>-->
-<!--<input id="my_public_key"/> <br/>-->
-<!--My Private Key:<br/>-->
-<!--<input id="my_private_key" /> <br/>-->
-<!--<button>Initialize</button>-->
-<!--</form>-->
-<!--Peer Public Key: <input id="peer_public_key"/> <br/>-->
-<!--<br/><br/>-->
 
 </body>
 </html>

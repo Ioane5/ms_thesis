@@ -13,9 +13,9 @@ $(function () {
 
     function initialize() {
         dataController = new P2PControllerClient();
-        dataController.isInitialized((publicKey, privateKey) => {
-            if (publicKey) {
-                fillSettings(publicKey, privateKey);
+        dataController.isInitialized((data) => {
+            if (data) {
+                fillSettings(data.publicKey, data.privateKey);
                 onDataControllerAvailable();
             } else {
                 openSettingsModal();
@@ -33,7 +33,8 @@ $(function () {
 
     $('#send_input').keypress(function (event) {
         let keycode = event.keyCode || event.which;
-        if (keycode === '13') {
+        // noinspection EqualityComparisonWithCoercionJS
+        if (keycode.toString() == "13") {
             sendMessage();
         }
     });
@@ -53,11 +54,16 @@ $(function () {
     }
 
     $('#settings_button').click(() => {
-        openSettingsModal()
+        openSettingsModal(true)
     });
 
-    function openSettingsModal() {
+    function openSettingsModal(cancellable) {
         let settingsModalDialog = $('#settings_modal');
+        if (cancellable) {
+            $('#cancel_settings_button').removeClass('disabled');
+        } else {
+            $('#cancel_settings_button').addClass('disabled');
+        }
         // settingsModalDialog.modal();
         settingsModalDialog.modal('open');
     }
