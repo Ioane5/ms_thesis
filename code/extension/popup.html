@@ -14,20 +14,28 @@
     <!-- Compiled and minified JavaScript -->
     <script src="libraries/materialize.min.js"></script>
     <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            min-height: 100%;
+        }
+
         body {
-            width: 400px;
-            height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header, footer {
+            flex: none;
         }
 
         .messages {
-            height: 420px;
-            width: 100%;
-            overflow: hidden;
             overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            flex: auto;
         }
 
         .send_form {
-            position: fixed;
             left: 0;
             right: 0;
             bottom: 0;
@@ -59,8 +67,7 @@
     </style>
 </head>
 <body>
-
-<div class="content">
+<header>
     <a id="settings_button" class="btn-floating blue"><i class="material-icons">settings</i></a>
     <nav>
         <div class="nav-wrapper blue">
@@ -69,20 +76,19 @@
             </div>
         </div>
     </nav>
+</header>
+<main class="messages">
+    <ul id="messages"></ul>
+</main>
 
-    <div class="messages">
-        <ul id="messages"></ul>
+<footer class="send_form row valign-wrapper">
+    <div class="input-field col s10 m11">
+        <input id="send_input" placeholder="Type a message..." type="text" class="validate" autofocus="false">
     </div>
-
-    <div class="send_form row valign-wrapper">
-        <div class="input-field col s10 m11">
-            <input id="send_input" placeholder="Type a message..." type="text" class="validate" autofocus="false">
-        </div>
-        <div class="col s2 m1">
-            <a id="send_button" class="btn-floating blue center-align"><i class="material-icons">send</i></a>
-        </div>
+    <div class="col s2 m1">
+        <a id="send_button" class="btn-floating blue center-align"><i class="material-icons">send</i></a>
     </div>
-</div>
+</footer>
 
 <!--Settings Dialog-->
 <div id="settings_modal" class="modal">
@@ -101,7 +107,7 @@
     </div>
     <div class="modal-footer">
         <a id="cancel_settings_button" class="modal-action modal-close waves-effect btn-flat">Cancel</a>
-        <a id="save_settings_button" class="modal-action modal-close waves-effect btn-flat">Save</a>
+        <a id="save_settings_button" class="modal-action modal-close waves-effect btn-flat">Initialize</a>
     </div>
 </div>
 

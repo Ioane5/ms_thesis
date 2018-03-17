@@ -1,4 +1,8 @@
 $(function () {
+    if (chrome.extension) {
+        $('body').height(500);
+        $('body').width(400);
+    }
     let dataController;
 
     function initDataController(publicKey, privateKey) {
