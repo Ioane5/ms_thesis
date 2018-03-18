@@ -16,7 +16,7 @@ $(function () {
     }
 
     function initialize() {
-        dataController = new P2PControllerClient();
+        dataController = new DataControllerClient();
         dataController.isInitialized((data) => {
             if (data) {
                 fillSettings(data.publicKey, data.privateKey);

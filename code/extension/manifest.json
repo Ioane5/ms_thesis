@@ -9,18 +9,14 @@
     "default_title": "Start Chat!"
   },
   "background": {
-    // Because you are using p2pcontroller, you should load it before your backgorund.js
-    // TODO move socket.io.js into p2pcontroller.js so that it's hidden and easier to use and import
     "scripts": [
-      "socket.io.js",
-      "p2pcontroller.js",
-      "p2pcontroller_wrapper.js",
+      "dataController.js",
       "background.js"
     ],
     "persistent": true
   },
   "permissions": [
-    "activeTab",
+    "background",
     "storage"
   ]
 }

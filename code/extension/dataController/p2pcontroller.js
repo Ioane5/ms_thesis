@@ -1,4 +1,6 @@
-class P2PController {
+import io from 'socket.io-client';
+
+export default class P2PController {
 
     constructor(publicKey, privateKey, liveUrl, liveConfig) {
         this.publicKey = publicKey;
