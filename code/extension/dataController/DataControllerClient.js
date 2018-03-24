@@ -1,9 +1,9 @@
-import P2PController from './p2pcontroller.js'
+import DataController from './DataController.js'
 
 /**
  * This is client for front side. It should be initialized
- * and has the exact same interface as P2PController.
- * It will interact with P2PControllerReceiver in Background page.
+ * and has the exact same interface as DataController.
+ * It will interact with DataControllerReceiver in Background page.
  */
 export default class DataControllerClient {
 
@@ -55,7 +55,7 @@ export default class DataControllerClient {
                 }
             }, callback);
         } else {
-            this.dataController = new P2PController(publicKey, privateKey, liveUrl, liveConfig);
+            this.dataController = new DataController(publicKey, privateKey, liveUrl, liveConfig);
             callback();
         }
     }

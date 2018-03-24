@@ -1,8 +1,8 @@
-import P2PController from './p2pcontroller.js'
+import DataController from './DataController.js'
 
 /**
  * This class should be initialized in Extension.
- * It will hold P2P controller and wait for actions from front side.
+ * It will hold data controller and wait for actions from front side.
  */
 export default class DataControllerReceiver {
     constructor() {
@@ -34,7 +34,7 @@ export default class DataControllerReceiver {
     }
 
     init(params, callback) {
-        this.dataController = new P2PController(params.publicKey, params.privateKey, 'http://localhost:8080');
+        this.dataController = new DataController(params.publicKey, params.privateKey, 'http://localhost:8080');
         this.dataController.listenDataChanges((message) => {
             chrome.runtime.sendMessage({
                 "action": "listenDataChanges",

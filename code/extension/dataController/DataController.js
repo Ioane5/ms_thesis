@@ -1,22 +1,34 @@
 import io from 'socket.io-client';
+import LocalDataController from "./LocalDataController";
 
-export default class P2PController {
+export default class DataController {
 
     constructor(publicKey, privateKey, liveUrl, liveConfig) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        this.liveController = new LiveController(publicKey, privateKey, liveUrl, liveConfig);
-        this.liveController.onMessageReceived((message) => {
-            this.onDataReceived(message);
+
+        this.localDataController = new LocalDataController((isSuccess) => {
+            if (!isSuccess) {
+                console.log('could not initialize local database!');
+                return;
+            }
+            this.liveController = new LiveController(publicKey, privateKey, liveUrl, liveConfig);
+            this.liveController.onMessageReceived((message) => {
+                this.onDataReceived(message);
+            });
         });
     }
 
-    query(key, callback) {
-        // TODO make a query from local and public datastore.
+    getByKey(key, callback) {
+        this.localDataController.getByKey(key, callback);
+    }
+
+    getByAuthor(author, callback) {
+        this.localDataController.getByAuthor(key, callback);
     }
 
     saveData(data, sharedWith) {
-        // TODO save data and share with peers
+        this.localDataController.save(data);
         this.liveController.sendData(data, sharedWith, (success) => {
             console.log('sendData success: ' + success);
             if (!success) {
@@ -30,9 +42,10 @@ export default class P2PController {
     }
 
     onDataReceived(data) {
+        // TODO verify data correctness.
+        this.localDataController.save(data);
         if (this.dataListener) {
             this.dataListener(data);
-            // TODO save in local store
         } else {
             console.log('data listener not set');
         }
