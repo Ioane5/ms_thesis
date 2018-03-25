@@ -1,7 +1,8 @@
 $(function () {
     if (chrome.extension) {
-        $('body').height(500);
-        $('body').width(400);
+        let body = $('body');
+        body.height(500);
+        body.width(400);
     }
     let dataController;
 
@@ -10,8 +11,8 @@ $(function () {
     }
 
     function onDataControllerAvailable() {
-        dataController.listenDataChanges((message) => {
-            $('#messages').append($('<li>').text(message));
+        dataController.listenDataChanges(() => {
+            onConversationChange();
         });
     }
 
@@ -52,9 +53,25 @@ $(function () {
         let sendInput = $('#send_input');
         let sendTo = $('#peer_public_key').val();
         let message = sendInput.val();
-        dataController.saveData(message, sendTo);
+        dataController.saveData({
+            'key': conversationId(),
+            'message': message,
+        }, sendTo, (success) => {
+            onConversationChange();
+        });
         // Reset Value in input
         sendInput.val('');
+    }
+
+    function conversationId() {
+        let publicKey = $('#public_key').val();
+        let peerPublicKey = $('#peer_public_key').val();
+        // Always sorted, so that peers have same conversation id.
+        if (publicKey > peerPublicKey) {
+            return publicKey + peerPublicKey;
+        } else {
+            return peerPublicKey + publicKey;
+        }
     }
 
     $('#settings_button').click(() => {
@@ -86,6 +103,31 @@ $(function () {
             }
         }
     );
+
+    function onConversationChange() {
+        console.log("onConversationChange");
+        dataController.getByKey(conversationId(), (conversation) => {
+            console.log(conversation);
+            let messageContainer = $('#messages');
+            messageContainer.empty();
+            if (conversation) {
+                conversation.forEach((elem) => {
+                    messageContainer.append($('<li>').text(elem.message));
+                });
+            }
+        });
+    }
+
+    $('#peer_public_key').on('input', function (e) {
+        let currentVal = $(this).val();
+        let lastVal = $(this).data('lastval');
+        // noinspection EqualityComparisonWithCoercionJS
+        if (lastVal != currentVal) {
+            $(this).data('lastval', $(this).val());
+            //change action
+            onConversationChange($(this).val());
+        }
+    });
 
     initialize();
 });

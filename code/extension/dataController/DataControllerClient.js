@@ -60,7 +60,7 @@ export default class DataControllerClient {
         }
     }
 
-    saveData(data, sharedWith) {
+    saveData(data, sharedWith, callback) {
         if (this.isChromeExtension()) {
             chrome.runtime.sendMessage({
                 "action": "saveData",
@@ -68,9 +68,9 @@ export default class DataControllerClient {
                     "data": data,
                     "sharedWith": sharedWith
                 }
-            });
+            }, callback);
         } else {
-            this.dataController.saveData(data, sharedWith);
+            this.dataController.saveData(data, sharedWith, callback);
         }
     }
 
@@ -79,6 +79,32 @@ export default class DataControllerClient {
             this.listenDataChangesCallback = callback;
         } else {
             this.dataController.listenDataChanges(callback);
+        }
+    }
+
+    getByKey(key, callback) {
+        if (this.isChromeExtension()) {
+            chrome.runtime.sendMessage({
+                "action": "getByKey",
+                "params": {
+                    "key": key,
+                }
+            }, callback);
+        } else {
+            this.dataController.getByKey(key, callback);
+        }
+    }
+
+    getByAuthor(author, callback) {
+        if (this.isChromeExtension()) {
+            chrome.runtime.sendMessage({
+                "action": "getByAuthor",
+                "params": {
+                    "author": author,
+                }
+            }, callback);
+        } else {
+            this.dataController.getByAuthor(author, callback);
         }
     }
 }

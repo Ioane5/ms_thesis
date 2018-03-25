@@ -27,8 +27,11 @@ export default class DataController {
         this.localDataController.getByAuthor(key, callback);
     }
 
-    saveData(data, sharedWith) {
-        this.localDataController.save(data);
+    saveData(data, sharedWith, callback) {
+        data['id'] = this.uuidv4();
+        data['author'] = this.publicKey;
+        data['createdAt'] = new Date();
+        this.localDataController.save(data, callback);
         this.liveController.sendData(data, sharedWith, (success) => {
             console.log('sendData success: ' + success);
             if (!success) {
@@ -43,12 +46,20 @@ export default class DataController {
 
     onDataReceived(data) {
         // TODO verify data correctness.
-        this.localDataController.save(data);
-        if (this.dataListener) {
-            this.dataListener(data);
-        } else {
-            console.log('data listener not set');
-        }
+        this.localDataController.save(data, (e) => {
+            if (this.dataListener) {
+                this.dataListener(data);
+            } else {
+                console.log('data listener not set');
+            }
+        });
+    }
+
+    uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
     }
 
     toString() {
@@ -120,7 +131,7 @@ class LiveController {
 
     sendDataToConnection(data, connection) {
         try {
-            connection.dataChannel.send(data);
+            connection.dataChannel.send(JSON.stringify(data));
             connection.callback(true);
         } catch (e) {
             connection.callback(false);
@@ -135,7 +146,7 @@ class LiveController {
         });
 
         this.socket.on('signalling_message', (message) => {
-            console.log('got signalling_message: ' + message);
+            console.log('got signalling_message: ', message);
             if (this.connections[message.fromPublicKey]) {
                 this.onSignallingMessage(message.fromPublicKey, message.data);
             } else {
@@ -244,8 +255,11 @@ class LiveController {
             }
         };
         connection.dataChannel.onmessage = (event) => {
-            console.log('received data ' + event.data);
-            this.onDataReceived(event.data);
+            if (event.data) {
+                let data = JSON.parse(event.data);
+                console.log('received data ', data);
+                this.onDataReceived(data);
+            }
         };
     }
 

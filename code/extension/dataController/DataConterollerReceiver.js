@@ -10,7 +10,7 @@ export default class DataControllerReceiver {
             let params = message["params"];
             switch (message["action"]) {
                 case "isInitialized":
-                    this.isInitialized(sendResponse);
+                    return this.isInitialized(sendResponse);
                     break;
                 case "init" :
                     this.init(params, sendResponse);
@@ -18,7 +18,14 @@ export default class DataControllerReceiver {
                 case "saveData":
                     this.saveData(params, sendResponse);
                     break;
+                case "getByKey":
+                    this.getByKey(params, sendResponse);
+                    break;
+                case "getByAuthor":
+                    this.getByAuthor(params, sendResponse);
+                    break;
             }
+            return true;
         });
     }
 
@@ -45,6 +52,14 @@ export default class DataControllerReceiver {
     }
 
     saveData(params, callback) {
-        this.dataController.saveData(params.data, params.sharedWith);
+        this.dataController.saveData(params.data, params.sharedWith, callback);
+    }
+
+    getByKey(params, callback) {
+        this.dataController.getByKey(params.key, callback);
+    }
+
+    getByAuthor(params, callback) {
+        this.dataController.getByAuthor(params.author, callback);
     }
 }

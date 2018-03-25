@@ -1,7 +1,7 @@
 export default class LocalDataController {
 
     constructor(callback) {
-        let openRequest = indexedDB.open('test_db', 1);
+        let openRequest = indexedDB.open('test_db', 2);
         openRequest.onupgradeneeded = function (e) {
             var db = e.target.result;
             if (!db.objectStoreNames.contains('data')) {
@@ -22,7 +22,7 @@ export default class LocalDataController {
     }
 
     _dataStore() {
-        this.db.objectStore('data')
+        return this.db.transaction(['data'], 'readwrite').objectStore('data');
     }
 
     save(data, callback) {
@@ -30,11 +30,14 @@ export default class LocalDataController {
         let key = data['key'];
         if (id && key) {
             try {
+                console.log('saving to db ', data);
                 let objectStoreRequest = this._dataStore().add(data);
                 objectStoreRequest.onsuccess = (event) => {
+                    console.log('saving to db: onsuccess:', event);
                     callback(true);
                 };
                 objectStoreRequest.onerror = (e) => {
+                    console.log('saving to db: onerror:', e);
                     callback(false, e);
                 }
             } catch (e) {
@@ -59,11 +62,20 @@ export default class LocalDataController {
     }
 
     _get(index, key, callback) {
-        let request = index.get(key);
+        let request = index.openCursor(IDBKeyRange.only(key));
+        console.log('getting from db:');
+        let list = [];
         request.onsuccess = (e) => {
-            callback(e.target.result);
+            let cursor = e.target.result;
+            if (cursor) {
+                list.push(cursor.value);
+                cursor.continue();
+            } else {
+                callback(list);
+            }
         };
         request.onerror = (e) => {
+            console.log('getting from db: onerror:', e);
             callback();
         }
     }
