@@ -278,7 +278,14 @@ class LiveController {
     onSignallingError(fromPublicKey) {
         console.log('signalling error ' + fromPublicKey);
         if (this.connections[fromPublicKey]) {
-            delete this.connections[fromPublicKey]
+            try {
+                let conn = this.connections[fromPublicKey];
+                delete this.connections[fromPublicKey];
+                conn.peerConn.close();
+                conn.dataChannel.close();
+            } catch (e) {
+                console.log(e);
+            }
         }
     }
 }

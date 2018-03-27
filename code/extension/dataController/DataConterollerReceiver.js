@@ -41,7 +41,7 @@ export default class DataControllerReceiver {
     }
 
     init(params, callback) {
-        this.dataController = new DataController(params.publicKey, params.privateKey, 'http://localhost:8080');
+        this.dataController = new DataController(params.publicKey, params.privateKey, params.liveUrl, params.liveConfig);
         this.dataController.listenDataChanges((message) => {
             chrome.runtime.sendMessage({
                 "action": "listenDataChanges",
