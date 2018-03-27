@@ -1,13 +1,13 @@
 export default class LocalDataController {
 
     constructor(callback) {
-        let openRequest = indexedDB.open('test_db', 2);
+        let openRequest = indexedDB.open('test_db', 3);
         openRequest.onupgradeneeded = function (e) {
             var db = e.target.result;
             if (!db.objectStoreNames.contains('data')) {
                 let dataStore = db.createObjectStore('data', {keyPath: 'id'});
-                dataStore.createIndex('key', 'key', {unique: false});
-                dataStore.createIndex('author', 'author', {unique: false});
+                dataStore.createIndex('key', ['key', 'created_at'], {unique: false});
+                dataStore.createIndex('author', ['author', 'created_at'], {unique: false});
             }
         };
         openRequest.onsuccess = (e) => {
@@ -62,7 +62,7 @@ export default class LocalDataController {
     }
 
     _get(index, key, callback) {
-        let request = index.openCursor(IDBKeyRange.only(key));
+        let request = index.openCursor(IDBKeyRange.bound([key], [this._getKeyUpperBound(key)], false, true));
         console.log('getting from db:');
         let list = [];
         request.onsuccess = (e) => {
@@ -78,5 +78,19 @@ export default class LocalDataController {
             console.log('getting from db: onerror:', e);
             callback();
         }
+    }
+
+    // Got from https://gist.github.com/inexorabletash/5462871
+    _getKeyUpperBound(key) {
+        let len = key.length;
+        while (len > 0) {
+            let head = key.substring(0, len - 1),
+                tail = key.charCodeAt(len - 1);
+            if (tail !== 0xFFFF)
+                return head + String.fromCharCode(tail + 1);
+            key = head;
+            --len;
+        }
+        return "";
     }
 }

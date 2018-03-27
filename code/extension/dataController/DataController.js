@@ -30,7 +30,7 @@ export default class DataController {
     saveData(data, sharedWith, callback) {
         data['id'] = this.uuidv4();
         data['author'] = this.publicKey;
-        data['createdAt'] = new Date();
+        data['created_at'] = new Date().getTime();
         this.localDataController.save(data, callback);
         this.liveController.sendData(data, sharedWith, (success) => {
             console.log('sendData success: ' + success);
