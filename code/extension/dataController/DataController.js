@@ -1,12 +1,14 @@
 import LocalDataController from "./LocalDataController";
 import LiveDataController from "./LiveDataController";
+import CloudDataController from "./CloudDataController";
 
 export default class DataController {
 
-    constructor(publicKey, privateKey, liveUrl, liveConfig) {
+    constructor(publicKey, privateKey, liveUrl, liveConfig, cloudUrl) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
 
+        this.cloudDataController = new CloudDataController(publicKey, privateKey, cloudUrl);
         this.localDataController = new LocalDataController((isSuccess) => {
             if (!isSuccess) {
                 console.log('could not initialize local database!');
@@ -16,6 +18,12 @@ export default class DataController {
             this.liveController.onMessageReceived((message) => {
                 this.onDataReceived(message);
             });
+        });
+    }
+
+    sync() {
+        this.cloudDataController.sync((message) => {
+            this.localDataController.save()
         });
     }
 
@@ -35,7 +43,9 @@ export default class DataController {
         this.liveController.sendData(data, sharedWith, (success) => {
             console.log('sendData success: ' + success);
             if (!success) {
-                // TODO try with MessageBox
+                this.cloudDataController.save(data, sharedWith, (success) => {
+                    console.log('Object saved in Cloud: ' + success);
+                });
             }
         });
     }

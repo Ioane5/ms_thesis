@@ -7,7 +7,7 @@ $(function () {
     let dataController;
 
     function initDataController(publicKey, privateKey) {
-        dataController.init(publicKey, privateKey, 'https://live-rooms.herokuapp.com/', null, onDataControllerAvailable);
+        dataController.init(publicKey, privateKey, 'https://live-rooms.herokuapp.com/', null, onDataControllerAvailable, 'https://message-box2.herokuapp.com/');
     }
 
     function onDataControllerAvailable() {

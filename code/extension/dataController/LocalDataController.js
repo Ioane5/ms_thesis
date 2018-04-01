@@ -3,7 +3,7 @@ export default class LocalDataController {
     constructor(callback) {
         let openRequest = indexedDB.open('test_db', 3);
         openRequest.onupgradeneeded = function (e) {
-            var db = e.target.result;
+            let db = e.target.result;
             if (!db.objectStoreNames.contains('data')) {
                 let dataStore = db.createObjectStore('data', {keyPath: 'id'});
                 dataStore.createIndex('key', ['key', 'created_at'], {unique: false});

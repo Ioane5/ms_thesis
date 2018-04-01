@@ -27,6 +27,11 @@ export default class DataControllerReceiver {
             }
             return true;
         });
+        chrome.alarms.onAlarm.addListener((alarm) => {
+            if (alarm.name == 'sync_cloud') {
+                this.dataController.sync();
+            }
+        });
     }
 
     isInitialized(callback) {
@@ -41,7 +46,7 @@ export default class DataControllerReceiver {
     }
 
     init(params, callback) {
-        this.dataController = new DataController(params.publicKey, params.privateKey, params.liveUrl, params.liveConfig);
+        this.dataController = new DataController(params.publicKey, params.privateKey, params.liveUrl, params.liveConfig, params.cloudUrl);
         this.dataController.listenDataChanges((message) => {
             chrome.runtime.sendMessage({
                 "action": "listenDataChanges",
