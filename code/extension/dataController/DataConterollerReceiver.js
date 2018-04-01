@@ -53,6 +53,8 @@ export default class DataControllerReceiver {
                 "message": message
             })
         });
+        chrome.alarms.clear('sync_cloud');
+        chrome.alarms.create('sync_cloud', {'periodInMinutes': params.syncPeriodInMinutes, 'delayInMinutes': 0});
         callback();
     }
 

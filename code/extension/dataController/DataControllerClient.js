@@ -44,9 +44,6 @@ export default class DataControllerClient {
     }
 
     init(publicKey, privateKey, liveUrl, liveConfig, callback, cloudUrl, syncPeriodInMinutes) {
-        chrome.alarms.clearAll(() => {
-            chrome.alarms.create('sync_cloud', {'periodInMinutes': syncPeriodInMinutes});
-        });
         if (this.isChromeExtension()) {
             chrome.runtime.sendMessage({
                 "action": "init",
@@ -55,7 +52,8 @@ export default class DataControllerClient {
                     "privateKey": privateKey,
                     "liveUrl": liveUrl,
                     "liveConfig": liveConfig,
-                    "cloudUrl": cloudUrl
+                    "cloudUrl": cloudUrl,
+                    "syncPeriodInMinutes" : syncPeriodInMinutes
                 }
             }, callback);
         } else {

@@ -37,9 +37,9 @@ export default class LiveDataController {
             }
         });
         this.socket.on('error', (message) => {
-            console.log('Error! : ' + message);
+            console.log('Error! : ', message);
             if (message && message.toPublicKey) {
-                this.onSignallingError(message);
+                this.onSignallingError(message.toPublicKey);
             }
         });
     }
@@ -53,8 +53,12 @@ export default class LiveDataController {
             } else {
                 this.socket.emit('connection_request', new Message(this.publicKey, recipient, null));
                 this.createPeerConnection(recipient, true, (connection) => {
-                    connection.callback = callback;
-                    this.sendDataToConnection(data, connection)
+                    if (connection) {
+                        connection.callback = callback;
+                        this.sendDataToConnection(data, connection)
+                    } else {
+                        callback(false);
+                    }
                 })
             }
         } else {
@@ -67,9 +71,9 @@ export default class LiveDataController {
             connection.dataChannel.send(JSON.stringify(data));
             connection.callback(true);
         } catch (e) {
-            connection.callback(false);
             this.onSignallingError(connection.peerPublicKey);
         }
+        connection.callback = null;
     }
 
     startListeningIncomingConnections() {
@@ -208,16 +212,19 @@ export default class LiveDataController {
         console.log(errorMsg);
     }
 
-    onSignallingError(fromPublicKey) {
-        console.log('signalling error ' + fromPublicKey);
-        if (this.connections[fromPublicKey]) {
+    onSignallingError(publicKey) {
+        console.log('signalling error ', publicKey, this.connections[publicKey]);
+        if (this.connections[publicKey]) {
             try {
-                let conn = this.connections[fromPublicKey];
-                delete this.connections[fromPublicKey];
+                let conn = this.connections[publicKey];
+                if (conn.callback) {
+                    conn.callback(null);
+                }
+                delete this.connections[publicKey];
                 conn.peerConn.close();
                 conn.dataChannel.close();
             } catch (e) {
-                console.log(e);
+                console.log('Could not process Signalling Error', e);
             }
         }
     }

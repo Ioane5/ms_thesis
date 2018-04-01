@@ -17,6 +17,8 @@
   },
   "permissions": [
     "background",
-    "storage"
+    "storage",
+    "alarms",
+    "unlimitedStorage"
   ]
 }

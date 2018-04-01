@@ -23,7 +23,7 @@ export default class DataController {
 
     sync() {
         this.cloudDataController.sync((message) => {
-            this.localDataController.save()
+            this.onDataReceived(message);
         });
     }
 
@@ -55,6 +55,7 @@ export default class DataController {
     }
 
     onDataReceived(data) {
+        console.log('onDataReceived', data);
         // TODO verify data correctness.
         this.localDataController.save(data, (e) => {
             if (this.dataListener) {

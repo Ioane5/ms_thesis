@@ -7,17 +7,19 @@ export default class CloudDataController {
     }
 
     sync(callback) {
+        console.log('Start Sync!');
         let request = new XMLHttpRequest();
         request.open("GET", this.baseUrl + '/messages/list/' + this.publicKey, true);
         request.onreadystatechange = () => {
             if (request.readyState == 4) {
                 if (request.status >= 200 && request.status < 300) {
                     let messageList = JSON.parse(request.responseText);
-                    messageList.forEach(function (messageId) {
+                    console.log('Sync: Response:', messageList);
+                    messageList.forEach((messageId) => {
                         this.downloadMessage(messageId, callback);
                     });
                 } else {
-                    callback(false);
+                    callback(null);
                 }
             }
         };
@@ -26,12 +28,16 @@ export default class CloudDataController {
 
     downloadMessage(messageId, callback) {
         let request = new XMLHttpRequest();
-        request.open("GET", this.baseUrl + '/messages/list/' + this.publicKey, true);
+        request.open("GET", this.baseUrl + '/messages/' + messageId, true);
         request.onreadystatechange = () => {
             if (request.readyState == 4) {
                 if (request.status >= 200 && request.status < 300) {
-                    let message = JSON.parse(request.responseText);
-                    callback(message.message);
+                    try {
+                        let message = JSON.parse(request.response)['message'];
+                        callback(JSON.parse(message));
+                    } catch (e) {
+                        console.log(e, request.response);
+                    }
                 } else {
                     callback(null);
                 }
@@ -53,6 +59,6 @@ export default class CloudDataController {
                 }
             }
         };
-        request.send(JSON.stringify({'data': data, 'sharedWith': sharedWith}));
+        request.send(JSON.stringify({'message': JSON.stringify(data), 'sharedWith': sharedWith}));
     }
 }
