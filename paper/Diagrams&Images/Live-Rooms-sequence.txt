@@ -1,0 +1,12 @@
+title Live-Rooms
+
+Alice->Server: enter_my_room
+Server-->Alice: Success
+Bob->Server: connection_request to Alice
+Server-->Alice: connection_request from Bob
+Alice-->Server: signalling_message to Bob
+Server-->Bob: signalling_message from Alice
+Bob-->Server: signalling_message to Alice
+Server-->Alice: signalling_message from Bob
+Alice-->Bob: Encrypted Application Message
+Bob-->Alice: Encrypted Application Message
