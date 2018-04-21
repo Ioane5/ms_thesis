@@ -27,6 +27,20 @@ export default class DataController {
         });
     }
 
+    fetchPublicByKey(key, callback) {
+        this.cloudDataController.fetchPublicByKey(key, callback);
+    }
+
+    publish(data, callback) {
+        this.saveData(data, null, (isSavedLocally) => {
+            if (isSavedLocally) {
+                this.cloudDataController.publish(data, callback);
+            } else {
+                callback(false)
+            }
+        });
+    }
+
     getByKey(key, callback) {
         this.localDataController.getByKey(key, callback);
     }
@@ -36,18 +50,29 @@ export default class DataController {
     }
 
     saveData(data, sharedWith, callback) {
-        data['id'] = this.uuidv4();
-        data['author'] = this.publicKey;
-        data['created_at'] = new Date().getTime();
+        // Reset if null
+        if (!data['id']) {
+            data['id'] = this.uuidv4();
+        }
+        if (!data['author']) {
+            data['author'] = this.publicKey;
+        }
+        if (!data['created_at']) {
+            data['created_at'] = new Date().getTime();
+        }
+        // Always save in local
         this.localDataController.save(data, callback);
-        this.liveController.sendData(data, sharedWith, (success) => {
-            console.log('sendData success: ' + success);
-            if (!success) {
-                this.cloudDataController.save(data, sharedWith, (success) => {
-                    console.log('Object saved in Cloud: ' + success);
-                });
-            }
-        });
+        // Only save in remote if required
+        if (sharedWith) {
+            this.liveController.sendData(data, sharedWith, (success) => {
+                console.log('sendData success: ' + success);
+                if (!success) {
+                    this.cloudDataController.save(data, sharedWith, (success) => {
+                        console.log('Object saved in Cloud: ' + success);
+                    });
+                }
+            });
+        }
     }
 
     listenDataChanges(callback) {

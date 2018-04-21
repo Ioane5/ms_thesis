@@ -53,14 +53,23 @@ $(function () {
         let sendInput = $('#send_input');
         let sendTo = $('#peer_public_key').val();
         let message = sendInput.val();
-        dataController.saveData({
-            'key': conversationId(),
-            'message': message,
-        }, sendTo, (success) => {
-            onConversationChange();
-        });
         // Reset Value in input
         sendInput.val('');
+        // Choose correct function for data sharing.
+        // In case of public data we publish.
+        // If it's a peer2peer chat then we share it.
+        let params = {
+            'key': conversationId(),
+            'message': message
+        };
+        let callback = (success) => {
+            onConversationChange();
+        };
+        if (isPublicConversation()) {
+            dataController.publish(params, callback);
+        } else {
+            dataController.saveData(params, callback);
+        }
     }
 
     function conversationId() {
@@ -104,18 +113,34 @@ $(function () {
         }
     );
 
+    /**
+     * Returns true if Current Conversation is in public channel
+     */
+    function isPublicConversation() {
+        let peerKey = $('#peer_public_key').val();
+        return peerKey.startsWith(":");
+    }
+
+    /**
+     * Just reloads conversation
+     */
     function onConversationChange() {
-        console.log("onConversationChange");
-        dataController.getByKey(conversationId(), (conversation) => {
-            console.log(conversation);
-            let messageContainer = $('#messages');
-            messageContainer.empty();
-            if (conversation) {
-                conversation.forEach((elem) => {
-                    messageContainer.append($('<li>').text(elem.message));
-                });
-            }
-        });
+        if (isPublicConversation()) {
+            dataController.fetchPublicByKey(conversationId(), this.updateChatView);
+        } else {
+            dataController.getByKey(conversationId(), this.updateChatView);
+        }
+    }
+
+    function updateChatView(conversation) {
+        console.log(conversation);
+        let messageContainer = $('#messages');
+        messageContainer.empty();
+        if (conversation) {
+            conversation.forEach((elem) => {
+                messageContainer.append($('<li>').text(elem.message));
+            });
+        }
     }
 
     $('#peer_public_key').on('input', function (e) {
@@ -125,7 +150,7 @@ $(function () {
         if (lastVal != currentVal) {
             $(this).data('lastval', $(this).val());
             //change action
-            onConversationChange($(this).val());
+            onConversationChange();
         }
     });
 

@@ -7,43 +7,39 @@ export default class CloudDataController {
     }
 
     sync(callback) {
-        console.log('Start Sync!');
-        let request = new XMLHttpRequest();
-        request.open("GET", this.baseUrl + '/messages/list/' + this.publicKey, true);
-        request.onreadystatechange = () => {
-            if (request.readyState == 4) {
-                if (request.status >= 200 && request.status < 300) {
-                    let messageList = JSON.parse(request.responseText);
-                    console.log('Sync: Response:', messageList);
-                    messageList.forEach((messageId) => {
-                        this.downloadMessage(messageId, callback);
-                    });
-                } else {
-                    callback(null);
-                }
-            }
-        };
-        request.send();
+        get(this.baseUrl + '/messages/list/' + this.publicKey).then((response) => {
+            let messageList = JSON.parse(response);
+            console.log('Sync: Response:', messageList);
+            messageList.forEach((messageId) => {
+                this.downloadMessage(messageId, callback);
+            });
+        }).catch((failedReason) => {
+            console.log("failed fetch", failedReason);
+            callback(null);
+        });
     }
 
     downloadMessage(messageId, callback) {
-        let request = new XMLHttpRequest();
-        request.open("GET", this.baseUrl + '/messages/' + messageId, true);
-        request.onreadystatechange = () => {
-            if (request.readyState == 4) {
-                if (request.status >= 200 && request.status < 300) {
-                    try {
-                        let message = JSON.parse(request.response)['message'];
-                        callback(JSON.parse(message));
-                    } catch (e) {
-                        console.log(e, request.response);
-                    }
-                } else {
-                    callback(null);
+        return this.messagePromise(messageId).then(function (message) {
+            callback(message);
+        }).catch(function (error) {
+            callback(null);
+        });
+    }
+
+    messagePromise(messageId) {
+        return new Promise((resolve, reject) => {
+            get(this.baseUrl + '/messages/' + messageId).then(function (response) {
+                try {
+                    let message = JSON.parse(response)['message'];
+                    resolve(JSON.parse(message));
+                } catch (e) {
+                    reject(e);
                 }
-            }
-        };
-        request.send();
+            }).catch((failedReason) => {
+                reject(failedReason);
+            });
+        });
     }
 
     save(data, sharedWith, callback) {
@@ -61,4 +57,62 @@ export default class CloudDataController {
         };
         request.send(JSON.stringify({'message': JSON.stringify(data), 'sharedWith': sharedWith}));
     }
+
+    publish(data, callback) {
+        let request = new XMLHttpRequest();
+        request.open("POST", this.baseUrl + '/public/', true);
+        request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        request.onreadystatechange = function () {
+            if (request.readyState == 4) {
+                if (request.status >= 200 && request.status < 300) {
+                    callback(true);
+                } else {
+                    callback(false);
+                }
+            }
+        };
+        request.send(JSON.stringify({'message': JSON.stringify(data)}));
+    }
+
+    fetchPublicByKey(key, callback) {
+        console.log("fetchPublicByKey", key);
+        get(this.baseUrl + '/public/list/' + key).then((response) => {
+            let messageList = JSON.parse(response);
+            console.log('getPublicByKey: Response:', messageList);
+            let arrayOfPromises = messageList.map((id) => {
+                this.messagePromise(id);
+            });
+            Promise.all(arrayOfPromises).then((results) => {
+                callback(results);
+            }).catch((errors) => {
+                console.log('could not download', errors);
+                callback(null);
+            });
+        }).catch((failedReason) => {
+            console.log("failed fetch", failedReason);
+            callback(null);
+        });
+    }
+}
+
+/**
+ * Function to use promises with Http Get request
+ * Reference: https://developers.google.com/web/fundamentals/primers/promises#promisifying_xmlhttprequest
+ */
+function get(url) {
+    return new Promise(function (resolve, reject) {
+        let req = new XMLHttpRequest();
+        req.open('GET', url);
+        req.onload = function () {
+            if (req.status >= 200 && req.status < 300) {
+                resolve(req.response);
+            } else {
+                reject(Error(req.statusText));
+            }
+        };
+        req.onerror = () => {
+            reject(Error("Network Error"));
+        };
+        req.send();
+    });
 }

@@ -18,11 +18,17 @@ export default class DataControllerReceiver {
                 case "saveData":
                     this.saveData(params, sendResponse);
                     break;
+                case "fetchPublicByKey":
+                    this.fetchPublicByKey(params, sendResponse);
+                    break;
                 case "getByKey":
                     this.getByKey(params, sendResponse);
                     break;
                 case "getByAuthor":
                     this.getByAuthor(params, sendResponse);
+                    break;
+                case "publish":
+                    this.publish(params, sendResponse);
                     break;
             }
             return true;
@@ -60,6 +66,14 @@ export default class DataControllerReceiver {
 
     saveData(params, callback) {
         this.dataController.saveData(params.data, params.sharedWith, callback);
+    }
+
+    fetchPublicByKey(params, callback) {
+        this.dataController.fetchPublicByKey(params.key, callback);
+    }
+
+    publish(params, callback) {
+        this.dataController.publish(params.data, callback);
     }
 
     getByKey(params, callback) {

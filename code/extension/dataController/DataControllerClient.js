@@ -76,11 +76,37 @@ export default class DataControllerClient {
         }
     }
 
+    publish(data, callback) {
+        if (this.isChromeExtension()) {
+            chrome.runtime.sendMessage({
+                "action": "publish",
+                "params": {
+                    "data": data,
+                }
+            }, callback);
+        } else {
+            this.dataController.publish(data, callback);
+        }
+    }
+
     listenDataChanges(callback) {
         if (this.isChromeExtension()) {
             this.listenDataChangesCallback = callback;
         } else {
             this.dataController.listenDataChanges(callback);
+        }
+    }
+
+    fetchPublicByKey(key, callback) {
+        if (this.isChromeExtension()) {
+            chrome.runtime.sendMessage({
+                "action": "fetchPublicByKey",
+                "params": {
+                    "key": key,
+                }
+            }, callback);
+        } else {
+            this.dataController.fetchPublicByKey(key, callback);
         }
     }
 
