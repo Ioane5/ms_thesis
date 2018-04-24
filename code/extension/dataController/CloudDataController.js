@@ -27,9 +27,16 @@ export default class CloudDataController {
         });
     }
 
-    messagePromise(messageId) {
+    messagePromise(messageId, publicMessage) {
         return new Promise((resolve, reject) => {
-            get(this.baseUrl + '/messages/' + messageId).then(function (response) {
+            let url;
+            if (publicMessage) {
+                url = this.baseUrl + '/messages/public/' + messageId;
+            } else {
+                // Private Message needs userId in order to verify
+                url = this.baseUrl + '/messages/' + messageId + '?userId=' + this.publicKey;
+            }
+            get(url).then(function (response) {
                 try {
                     let message = JSON.parse(response)['message'];
                     resolve(JSON.parse(message));
@@ -60,7 +67,7 @@ export default class CloudDataController {
 
     publish(data, callback) {
         let request = new XMLHttpRequest();
-        request.open("POST", this.baseUrl + '/public/', true);
+        request.open("POST", this.baseUrl + '/messages/public/', true);
         request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         request.onreadystatechange = function () {
             if (request.readyState == 4) {
@@ -76,7 +83,7 @@ export default class CloudDataController {
 
     fetchPublicByKey(key, callback) {
         console.log("fetchPublicByKey", key);
-        get(this.baseUrl + '/public/list/' + key).then((response) => {
+        get(this.baseUrl + '/messages/public/list/' + key).then((response) => {
             let messageList = JSON.parse(response);
             console.log('getPublicByKey: Response:', messageList);
             let arrayOfPromises = messageList.map((id) => {
