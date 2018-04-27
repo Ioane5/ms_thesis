@@ -28,24 +28,24 @@ export default class CloudDataController {
     }
 
     messagePromise(messageId, publicMessage) {
-        return new Promise((resolve, reject) => {
-            let url;
-            if (publicMessage) {
-                url = this.baseUrl + '/messages/public/' + messageId;
-            } else {
-                // Private Message needs userId in order to verify
-                url = this.baseUrl + '/messages/' + messageId + '?userId=' + this.publicKey;
+        let url;
+        if (publicMessage) {
+            url = this.baseUrl + '/messages/public/' + messageId;
+        } else {
+            // Private Message needs userId in order to verify
+            url = this.baseUrl + '/messages/' + messageId + '?userId=' + this.publicKey;
+        }
+        return get(url).then((response) => {
+            try {
+                console.log("MessageResponse", response);
+                let document = JSON.parse(response);
+                return JSON.parse(document.message);
+            } catch (e) {
+                console.log(e);
+                return null;
             }
-            get(url).then(function (response) {
-                try {
-                    let message = JSON.parse(response)['message'];
-                    resolve(JSON.parse(message));
-                } catch (e) {
-                    reject(e);
-                }
-            }).catch((failedReason) => {
-                reject(failedReason);
-            });
+        }).catch(() => {
+            return null;
         });
     }
 
@@ -78,16 +78,16 @@ export default class CloudDataController {
                 }
             }
         };
-        request.send(JSON.stringify({'message': JSON.stringify(data)}));
+        request.send(JSON.stringify({'message': JSON.stringify(data), 'key': data.key}));
     }
 
     fetchPublicByKey(key, callback) {
-        console.log("fetchPublicByKey", key);
+        console.log("fetchPublicByKey", key, callback);
         get(this.baseUrl + '/messages/public/list/' + key).then((response) => {
             let messageList = JSON.parse(response);
             console.log('getPublicByKey: Response:', messageList);
             let arrayOfPromises = messageList.map((id) => {
-                this.messagePromise(id);
+                return this.messagePromise(id, true);
             });
             Promise.all(arrayOfPromises).then((results) => {
                 callback(results);
@@ -107,6 +107,7 @@ export default class CloudDataController {
  * Reference: https://developers.google.com/web/fundamentals/primers/promises#promisifying_xmlhttprequest
  */
 function get(url) {
+    console.log('called get', url);
     return new Promise(function (resolve, reject) {
         let req = new XMLHttpRequest();
         req.open('GET', url);

@@ -53,11 +53,11 @@ export default class DataControllerClient {
                     "liveUrl": liveUrl,
                     "liveConfig": liveConfig,
                     "cloudUrl": cloudUrl,
-                    "syncPeriodInMinutes" : syncPeriodInMinutes
+                    "syncPeriodInMinutes": syncPeriodInMinutes
                 }
             }, callback);
         } else {
-            this.dataController = new DataController(publicKey, privateKey, liveUrl, liveConfig);
+            this.dataController = new DataController(publicKey, privateKey, liveUrl, liveConfig, cloudUrl, syncPeriodInMinutes);
             callback();
         }
     }

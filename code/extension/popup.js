@@ -75,6 +75,10 @@ $(function () {
     function conversationId() {
         let publicKey = $('#public_key').val();
         let peerPublicKey = $('#peer_public_key').val();
+        // To make all public conversations with same key, then we only use public  peer id
+        if (isPublicConversation()) {
+            return peerPublicKey;
+        }
         // Always sorted, so that peers have same conversation id.
         if (publicKey > peerPublicKey) {
             return publicKey + peerPublicKey;
@@ -118,22 +122,23 @@ $(function () {
      */
     function isPublicConversation() {
         let peerKey = $('#peer_public_key').val();
-        return peerKey.startsWith(":");
+        return peerKey.startsWith("_");
     }
 
     /**
      * Just reloads conversation
      */
     function onConversationChange() {
+        console.log('onconversationchange', this.updateChatView);
         if (isPublicConversation()) {
-            dataController.fetchPublicByKey(conversationId(), this.updateChatView);
+            dataController.fetchPublicByKey(conversationId(), updateChatView);
         } else {
-            dataController.getByKey(conversationId(), this.updateChatView);
+            dataController.getByKey(conversationId(), updateChatView);
         }
     }
 
     function updateChatView(conversation) {
-        console.log(conversation);
+        console.log('update chat', conversation);
         let messageContainer = $('#messages');
         messageContainer.empty();
         if (conversation) {
