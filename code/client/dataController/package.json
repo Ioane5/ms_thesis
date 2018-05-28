@@ -1,0 +1,25 @@
+{
+  "name": "datacontroller",
+  "version": "1.0.0",
+  "description": "MsThesis core",
+  "main": "p2pcontroller_wrapper.js",
+  "dependencies": {
+    "node-forge": "^0.7.5",
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.12"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "socket.io-client": "^2.0.4"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "P2PController",
+    "WebRTC"
+  ],
+  "author": "Ioane Sharvadze",
+  "license": "ISC"
+}
